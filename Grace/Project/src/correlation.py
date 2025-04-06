@@ -313,16 +313,44 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
         print(f"Error generating plot: {e}")
         fig = None
 
+    # --- 6. Save Final Output with all the Input params---
+    # Save parameters and correlation to a CSV file
+    output_csv_path = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_results.csv'
+    try:
+        # Create a dictionary of parameters and results
+        result_data = {
+            'Location_Lon': [location[0]],
+            'Location_Lat': [location[1]],
+            'Time_Start': [time_start],
+            'Time_End': [time_end],
+            'Soil_Depths': [', '.join(soil_depths)],
+            'Correlation': [correlation]
+        }
+        # Convert to a DataFrame
+        result_df = pd.DataFrame(result_data)
+
+        # Check if the file exists
+        if not pd.io.common.file_exists(output_csv_path):
+            # If the file does not exist, write with header
+            result_df.to_csv(output_csv_path, mode='w', index=False, header=True)
+            print(f"Results saved to new file: {output_csv_path}")
+        else:
+            # Append to the CSV without overwriting existing data
+            result_df.to_csv(output_csv_path, mode='a', index=False, header=False)
+            print(f"Results appended to: {output_csv_path}")
+    except Exception as e:
+        print(f"Error saving results to CSV: {e}")
+
     print("--- Analysis Complete ---")
     return correlation, fig
 
 # --- Example Usage ---
 
 # Define Inputs
-LOCATION = (-100, 55.0)  
-TIME_START = '2005-01-01'
-TIME_END = '2015-12-31'
-SOIL_DEPTHS = ['0-10cm', '10-40cm'] # Combine top two layers
+LOCATION = (-80, 55.0)  
+TIME_START = '2002-01-01'
+TIME_END = '2022-12-31'
+SOIL_DEPTHS = ['0-10cm'] # Combine top two layers
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
 MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons.nc'
@@ -346,13 +374,13 @@ correlation_value, plot_figure = correlate_mascons_gldas(
     mascons_filepath=MASCONS_FILE
 )
 
-# if plot_figure:
-#     # Save the plot to a file
-#     plot_filename = f"../output/mascon_gldas_correlation_{LOCATION[0]}_{LOCATION[1]}.png"
-#     plot_figure.savefig(plot_filename)
-#     print(f"Plot saved as: {plot_filename}")
+if plot_figure:
+    # Save the plot to a file
+    plot_filename = f"/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_plots/mascon_gldas_correlation_{LOCATION[0]}_{LOCATION[1]}.png"
+    plot_figure.savefig(plot_filename)
+    print(f"Plot saved as: {plot_filename}")
 
-#     # Show the plot
-#     plt.show()
-# else:
-#     print("\nCorrelation calculation or plotting failed.")
+    # Show the plot
+    plt.show()
+else:
+    print("\nCorrelation calculation or plotting failed.")
