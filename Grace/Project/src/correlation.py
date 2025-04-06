@@ -307,7 +307,7 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 
     # --- 4. Calculate Correlation ---
     try:
-        correlation = df_aligned[mascon_series.name].corr(df_aligned[gldas_series.name])
+        correlation = df_aligned[col_mascon_std_name].corr(df_aligned[col_gldas_std_name])
         print(f"Calculated Pearson Correlation: {correlation:.4f}")
     except Exception as e:
         print(f"Error calculating correlation: {e}")
