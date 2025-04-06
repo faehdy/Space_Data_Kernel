@@ -113,13 +113,16 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
             mascon_coords = np.vstack((lon_grid.ravel(), lat_grid.ravel())).T
 
             # Use cdist for efficient nearest neighbor search
-            dist = cdist([location], mascon_coords)
+            if location[0] < 0:
+            # add 360 to lon to get the correct distance
+                location_mascons = np.array(location) + np.array([360, 0]) # Adjust lon to match Mascon's 0-360 range
+            dist = cdist([location_mascons], mascon_coords)
             nearest_idx = np.argmin(dist)
             mascon_lat_idx, mascon_lon_idx = np.unravel_index(nearest_idx, lon_grid.shape)
 
             nearest_mascon_lon = mascon_lon[mascon_lon_idx]
             nearest_mascon_lat = mascon_lat[mascon_lat_idx]
-            print(f"Nearest Mascon point: Lon={nearest_mascon_lon:.3f}, Lat={nearest_mascon_lat:.3f}")
+            print(f"Nearest Mascon point: Lon={nearest_mascon_lon -360:.3f}, Lat={nearest_mascon_lat:.3f}")
 
             # Extract the time series for the nearest point
             mascon_ts_data = mascon_lwe[:, mascon_lat_idx, mascon_lon_idx]
@@ -268,6 +271,39 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
     print(f"Aligned monthly data points for correlation: {len(df_aligned)}")
     print(f"Aligned time range: {df_aligned.index.min().strftime('%Y-%m-%d')} to {df_aligned.index.max().strftime('%Y-%m-%d')}")
 
+    # --- 4. Standardize Data (Calculate Z-scores) ---
+    print("Standardizing data (Z-score)...")
+
+    # Get the original column names dynamically
+    col_mascon = df_aligned.columns[0] # Assumes Mascon is the first column
+    col_gldas = df_aligned.columns[1]  # Assumes GLDAS is the second column
+
+    # Calculate mean and std dev for each column
+    mean_mascon = df_aligned[col_mascon].mean()
+    std_mascon = df_aligned[col_mascon].std()
+    mean_gldas = df_aligned[col_gldas].mean()
+    std_gldas = df_aligned[col_gldas].std()
+
+    # Create new standardized columns (Z-scores)
+    # Check for zero standard deviation to avoid division by zero
+    col_mascon_std_name = f'{col_mascon}_std'
+    col_gldas_std_name = f'{col_gldas}_std'
+
+    if std_mascon > 1e-9: # Use a small threshold instead of == 0 for float precision
+        df_aligned[col_mascon_std_name] = (df_aligned[col_mascon] - mean_mascon) / std_mascon
+        print(f"  Standardized {col_mascon} (mean={mean_mascon:.2f}, std={std_mascon:.2f})")
+    else:
+        print(f"Warning: Standard deviation for {col_mascon} is near zero. Standardization results in zeros.")
+        df_aligned[col_mascon_std_name] = 0.0 # Assign 0 if no variance
+
+    if std_gldas > 1e-9:
+        df_aligned[col_gldas_std_name] = (df_aligned[col_gldas] - mean_gldas) / std_gldas
+        print(f"  Standardized {col_gldas} (mean={mean_gldas:.2f}, std={std_gldas:.2f})")
+    else:
+        print(f"Warning: Standard deviation for {col_gldas} is near zero. Standardization results in zeros.")
+        df_aligned[col_gldas_std_name] = 0.0 # Assign 0 if no variance
+
+
 
     # --- 4. Calculate Correlation ---
     try:
@@ -323,6 +359,8 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
             'Location_Lat': [location[1]],
             'Time_Start': [time_start],
             'Time_End': [time_end],
+            'Mascon_coordinates': [f'Lon={nearest_mascon_lon-360:.3f}, Lat={nearest_mascon_lat:.3f}'],
+            'GLDAS_coordinates': [f'Lon={nearest_gldas_lon:.3f}, Lat={nearest_gldas_lat:.3f}'],
             'Soil_Depths': [', '.join(soil_depths)],
             'Correlation': [correlation]
         }
@@ -349,8 +387,8 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 # Define Inputs
 LOCATION = (-80, 55.0)  
 TIME_START = '2002-01-01'
-TIME_END = '2022-12-31'
-SOIL_DEPTHS = ['0-10cm'] # Combine top two layers
+TIME_END = '2017-12-31'
+SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm'] # Combine top two layers
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
 MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons.nc'
@@ -365,22 +403,51 @@ MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JP
 #    For very large CSVs, pre-processing or using a spatial index might be faster.
 
 # Run the function (Make sure paths are correct before uncommenting!)
-correlation_value, plot_figure = correlate_mascons_gldas(
-    location=LOCATION,
-    time_start=TIME_START,
-    time_end=TIME_END,
-    soil_depths=SOIL_DEPTHS,
-    gldas_filepath=GLDAS_FILE,
-    mascons_filepath=MASCONS_FILE
-)
+# correlation_value, plot_figure = correlate_mascons_gldas(
+#     location=LOCATION,
+#     time_start=TIME_START,
+#     time_end=TIME_END,
+#     soil_depths=SOIL_DEPTHS,
+#     gldas_filepath=GLDAS_FILE,
+#     mascons_filepath=MASCONS_FILE
+# )
 
-if plot_figure:
-    # Save the plot to a file
-    plot_filename = f"/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_plots/mascon_gldas_correlation_{LOCATION[0]}_{LOCATION[1]}.png"
-    plot_figure.savefig(plot_filename)
-    print(f"Plot saved as: {plot_filename}")
+# if plot_figure:
+#     # Save the plot to a file
+#     plot_filename = f"/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_plots/mascon_gldas_correlation_{LOCATION[0]}_{LOCATION[1]}.png"
+#     plot_figure.savefig(plot_filename)
+#     print(f"Plot saved as: {plot_filename}")
 
-    # Show the plot
-    plt.show()
-else:
-    print("\nCorrelation calculation or plotting failed.")
+#     # Show the plot
+#     plt.show()
+# else:
+#     print("\nCorrelation calculation or plotting failed.")
+
+
+
+### Iterate over entire canada with a grid of 10° lon/lat
+# Define the grid of locations
+lon_range = np.arange(-120, -90, 5)  # Example range for longitudes
+lat_range = np.arange(50, 62, 5)    # Example range for latitudes
+locations = [(lon, lat) for lon in lon_range for lat in lat_range]
+
+# Iterate over each location
+for loc in locations:
+    print(f"Processing location: {loc}")
+    correlation_value, plot_figure = correlate_mascons_gldas(
+        location=loc,
+        time_start=TIME_START,
+        time_end=TIME_END,
+        soil_depths=SOIL_DEPTHS,
+        gldas_filepath=GLDAS_FILE,
+        mascons_filepath=MASCONS_FILE
+    )
+
+    if plot_figure:
+        # Save the plot to a file
+        plot_filename = f"/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_plots/mascon_gldas_correlation_{loc[0]}_{loc[1]}.png"
+        plot_figure.savefig(plot_filename)
+        print(f"Plot saved as: {plot_filename}")
+
+    else:
+        print("\nCorrelation calculation or plotting failed.")
