@@ -1,0 +1,2 @@
+explore_GLDAS: Explore the GLDAS data and preprocess it to have one single file for entire canada.
+correlator water wildfire: Correlates the preprocessed (combination of Grace and GLDAS) water data to the wildfire grided data
