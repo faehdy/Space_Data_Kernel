@@ -190,7 +190,7 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
             return np.nan, None
 
         # Sum the selected soil moisture columns (kg/m^2 is equivalent to mm)
-        gldas_series = gldas_location_df[selected_cols].sum(axis=1)
+        gldas_series = gldas_location_df[selected_cols].mean(axis=1)
         gldas_series.name = f"GLDAS_SoilMoisture_{'_'.join(soil_depths)}_mm"
 
 
@@ -388,7 +388,7 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 LOCATION = (-80, 55.0)  
 TIME_START = '2002-01-01'
 TIME_END = '2017-12-31'
-SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm'] # Combine top two layers
+SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] 
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
 MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons.nc'
