@@ -262,6 +262,82 @@ def prepare_aligned_timeseries_optimized(grid_gdf, monthly_water_series, target_
     except Exception as e:
         print(f"Error preparing aligned timeseries for ({target_fire_lon}, {target_fire_lat}): {e}")
         return None
+    
+def calculate_cross_correlation(aligned_df, max_lag=12):
+    """
+    Calculates the cross-correlation function (CCF) between two time series.
+
+    Args:
+        aligned_df (pd.DataFrame): DataFrame with 'cumuarea' and 'waterstorage'.
+        max_lag (int): Maximum lag (in months) to consider.
+
+    Returns:
+        tuple: (lags, ccf_values), or (None, None) if error.
+            - lags: Array of lags from -max_lag to +max_lag.
+            - ccf_values: Corresponding cross-correlation coefficients.
+            Positive lag means water storage leads fire area.
+            Negative lag means fire area leads water storage.
+    """
+    if aligned_df is None or not all(col in aligned_df.columns for col in ['cumuarea', 'waterstorage']):
+         print("Invalid DataFrame passed to calculate_cross_correlation.")
+         return None, None
+    if len(aligned_df) <= max_lag: # Need enough points to calculate lags
+         print(f"Not enough data points ({len(aligned_df)}) for max_lag={max_lag}.")
+         return None, None
+
+    try:
+        # Ensure data is numeric and finite, handle potential NaNs
+        area = pd.to_numeric(aligned_df['cumuarea'], errors='coerce').dropna()
+        water = pd.to_numeric(aligned_df['waterstorage'], errors='coerce').dropna()
+
+        # Re-align after dropping NaNs individually if necessary
+        common_index = area.index.intersection(water.index)
+        if len(common_index) <= max_lag:
+            print(f"Not enough overlapping non-NaN points ({len(common_index)}) for max_lag={max_lag}.")
+            return None, None
+
+        area = area.loc[common_index]
+        water = water.loc[common_index]
+
+        # Statsmodels ccf requires subtraction of mean for interpretability
+        ccf_vals = ccf(area - area.mean(), water - water.mean(), adjusted=False) # Calculate full ccf
+
+        # Extract values around lag 0
+        # ccf output: index 0 is lag 0, index 1 is lag 1 (x leads y), etc.
+        # We need negative lags too. Statsmodels doesn't directly return neg lags easily.
+        # Let's calculate manually for symmetrical view or use numpy.correlate as fallback
+        # Using numpy.correlate for easier symmetrical lag handling:
+        # Note: np.correlate(a, v) where a is fire, v is water
+        #       Positive lag index means 'v' (water) is shifted left (leads fire)
+        area_norm = (area - area.mean()) / (area.std() * len(area)) # Normalize for correlation scale
+        water_norm = (water - water.mean()) / water.std()
+        corr_np = np.correlate(area_norm, water_norm, mode='full') # mode='full' gives -N+1 to N-1 lags
+
+        # Lags corresponding to np.correlate output: from -(N-1) to +(N-1)
+        n = len(area)
+        lags_np = np.arange(-(n - 1), n)
+
+        # Limit to max_lag
+        center_idx = np.where(lags_np == 0)[0][0]
+        indices_to_keep = (lags_np >= -max_lag) & (lags_np <= max_lag)
+        limited_lags = lags_np[indices_to_keep]
+        limited_ccf_vals = corr_np[indices_to_keep]
+
+        # return limited_lags, limited_ccf_vals # Use this if using numpy approach
+        # Using statsmodels ccf and manually getting negative lags:
+        ccf_pos_lags = ccf(area - area.mean(), water - water.mean(), adjusted=False)[ : max_lag + 1] # Lag 0 to max_lag
+        ccf_neg_lags_rev = ccf(water - water.mean(), area - area.mean(), adjusted=False)[1 : max_lag + 1] # Lag 1 to max_lag (water vs PAST fire) -> reverse for (fire vs PAST water)
+        
+        ccf_symm = np.concatenate((ccf_neg_lags_rev[::-1], ccf_pos_lags))
+        lags_symm = np.arange(-max_lag, max_lag + 1)
+        
+        return lags_symm, ccf_symm # Using statsmodels symmetric approach
+
+
+    except Exception as e:
+        print(f"Error calculating cross-correlation: {e}")
+        return None, None
+
 
 
 # --- REVISED Orchestration Function ---
@@ -414,30 +490,11 @@ if __name__ == "__main__": # Ensures code runs only when script is executed dire
     wildfire_grid_gdf = gpd.read_file(wildfire_file) # Use existing file
     wildfire_grid_gdf.crs = "EPSG:4326" # Set CRS if not already set
 
-    #     wildfire_grid_gdf.to_file(wildfire_file, driver='GPKG') # Save dummy file
-    #     print(f"Saved dummy {wildfire_file}")
-
-    #     water_times = pd.to_datetime(pd.date_range('2001-01-01', '2005-12-31', freq='D'))
-    #     water_locs = [(-116.1, 56.9), (-110.4, 60.1), (-100.0, 50.0)] # Note slight difference from fire grid
-    #     n_times = len(water_times)
-    #     n_locs = len(water_locs)
-    #     water_data_list = []
-    #     for i in range(n_times):
-    #          for j in range(n_locs):
-    #              water_data_list.append({
-    #                  'time': water_times[i],
-    #                  'lon': water_locs[j][0],
-    #                  'lat': water_locs[j][1],
-    #                  'waterstorage': 25 + np.random.randn() * 5 + np.sin(water_times[i].dayofyear / 365.25 * 2 * np.pi) * 10 - j*5
-    #              })
+    
     # read the parquet file
-    water_df_raw = pd.read_parquet(water_file) #  # Save dummy file
-    #     print(f"Saved dummy {water_file} with {len(water_df_raw)} rows.")
-    #     # --- End Dummy Data ---
+    water_gdf_raw = gpd.read_parquet(water_file) #  # Save dummy file
+    water_gdf_raw.crs = "EPSG:4326" # Set CRS if not already set
 
-    # except Exception as e:
-    #     print(f"Error loading data: {e}")
-    #     exit() # Exit if data loading fails
 
 
     # --- Workflow Steps ---
@@ -445,7 +502,7 @@ if __name__ == "__main__": # Ensures code runs only when script is executed dire
 
     # Step 1: Prepare Water GDF (ensure geometry)
     print("Step 1: Preparing Water GeoDataFrame...")
-    water_gdf_raw = prepare_water_gdf(water_df_raw, lon_col='lon', lat_col='lat')
+    water_gdf_raw = prepare_water_gdf(water_gdf_raw, lon_col='lon', lat_col='lat')
     if water_gdf_raw is None: exit()
 
     # Step 2: Get Unique Locations
@@ -464,7 +521,7 @@ if __name__ == "__main__": # Ensures code runs only when script is executed dire
     print("\nStep 4: Preprocessing all water time series (this may take time)...")
     # Pass raw DataFrame (not GDF) for efficiency if lon/lat columns exist
     all_monthly_water_data = preprocess_all_water_timeseries_monthly(
-        water_df_raw, lon_col='lon', lat_col='lat', time_col='time', value_col='waterstorage', precision=COORD_PRECISION
+        water_gdf_raw, lon_col='lon', lat_col='lat', time_col='time', value_col='waterstorage', precision=COORD_PRECISION
     )
     if not all_monthly_water_data:
         print("Error: Water data preprocessing failed or yielded no data.")
