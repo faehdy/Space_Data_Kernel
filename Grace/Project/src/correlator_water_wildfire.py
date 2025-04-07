@@ -399,7 +399,7 @@ def analyze_location_correlation(grid_gdf, water_df_raw, target_lon, target_lat)
 
 wildfire_grid_gdf = gpd.read_file('Grace/Project/Data/aggregated_wildfire_grid.csv')
 
-water_df_raw = pd.read_csv('Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv')
+water_df_raw = gpd.read_file('Grace/Project/Data/data_GLDAS/gdf_compiled_canada_soil_moisture.csv')
 
 # Example target location (longitude, latitude)
 target_lon_example = -116.125
