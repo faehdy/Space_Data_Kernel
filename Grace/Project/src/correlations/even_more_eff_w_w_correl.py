@@ -264,6 +264,11 @@ def calculate_correlation(aligned_df):
     if aligned_df is None or not all(col in aligned_df.columns for col in ['cumuarea', 'waterstorage']):
         print("Invalid DataFrame passed to calculate_correlation.")
         return None, None
+    #Check if the wildfire series is constant
+    if aligned_df['cumuarea'].nunique() == 1:
+        print("Wildfire series is constant. No correlation possible.")
+        return None, None
+    
     if aligned_df['cumuarea'].isnull().all() or aligned_df['waterstorage'].isnull().all():
         print("One or both series contain only NaNs.")
         return None, None
@@ -273,6 +278,7 @@ def calculate_correlation(aligned_df):
 
     try:
         # Ensure data is numeric and finite
+        print("Calculating correlation...")
         area = pd.to_numeric(aligned_df['cumuarea'], errors='coerce')
         water = pd.to_numeric(aligned_df['waterstorage'], errors='coerce')
         valid_indices = area.notna() & water.notna() & np.isfinite(area) & np.isfinite(water)
@@ -425,9 +431,9 @@ def analyze_location_correlation_optimized(
 if __name__ == "__main__":
 
     # --- Configuration ---
-    wildfire_file = 'Grace/Project/Data/aggregated_wildfire_grid.gpkg'
-    water_file = 'Grace/Project/Data/data_GLDAS/gdf_compiled_canada_soil_moisture.parquet'
-    results_output_file = 'correlation_results_exact_match.csv'
+    wildfire_file = 'Grace/Project/Data/aggregated_wildfire_grid_complete_1deg_w0.gpkg'
+    water_file = 'Grace/Project/output/downsampled_1deg_water.parquet'
+    results_output_file = 'Grace/Project/output/correlation_results_exact_match.csv'
 
     if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
 
