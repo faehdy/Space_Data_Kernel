@@ -351,7 +351,7 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 
     # --- 6. Save Final Output with all the Input params---
     # Save parameters and correlation to a CSV file
-    output_csv_path = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_results.csv'
+    output_csv_path = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_results_Grace_SM.csv'
     try:
         # Create a dictionary of parameters and results
         result_data = {
@@ -392,36 +392,6 @@ SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm']
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
 MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons.nc'
-
-# --- Important Notes Before Running ---
-# 1. REPLACE 'path/to/your/...' with the ACTUAL file paths on your system.
-# 2. Ensure your GLDAS CSV has columns named 'time', 'lat', 'lon', and the soil moisture columns
-#    (e.g., 'SoilMoi0_10cm_inst', 'SoilMoi10_40cm_inst', etc.).
-# 3. Ensure your Mascon NetCDF file has variables named 'lwe_thickness', 'lat', 'lon', 'time'.
-# 4. The Mascon time units should be compatible with nc.num2date (like 'days since YYYY-MM-DD HH:MM:SS').
-# 5. The performance for finding the nearest GLDAS point depends on the CSV size.
-#    For very large CSVs, pre-processing or using a spatial index might be faster.
-
-# Run the function (Make sure paths are correct before uncommenting!)
-# correlation_value, plot_figure = correlate_mascons_gldas(
-#     location=LOCATION,
-#     time_start=TIME_START,
-#     time_end=TIME_END,
-#     soil_depths=SOIL_DEPTHS,
-#     gldas_filepath=GLDAS_FILE,
-#     mascons_filepath=MASCONS_FILE
-# )
-
-# if plot_figure:
-#     # Save the plot to a file
-#     plot_filename = f"/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_plots/mascon_gldas_correlation_{LOCATION[0]}_{LOCATION[1]}.png"
-#     plot_figure.savefig(plot_filename)
-#     print(f"Plot saved as: {plot_filename}")
-
-#     # Show the plot
-#     plt.show()
-# else:
-#     print("\nCorrelation calculation or plotting failed.")
 
 
 
