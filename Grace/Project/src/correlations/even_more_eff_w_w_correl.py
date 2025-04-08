@@ -4,9 +4,8 @@ import numpy as np
 from shapely.geometry import Point
 from scipy.stats import pearsonr
 from statsmodels.tsa.stattools import ccf
-# import matplotlib.pyplot as plt # Comment out if plots aren't generated/saved
-# import matplotlib.dates as mdates # Comment out if plots aren't generated/saved
-# from scipy.spatial import cKDTree # No longer needed for exact match
+import matplotlib.pyplot as plt # Comment out if plots aren't generated/saved
+import matplotlib.dates as mdates # Comment out if plots aren't generated/saved
 import os
 import pickle
 import gc
@@ -19,6 +18,8 @@ CACHE_DIR = 'cache'
 LOCATION_MAP_CACHE = os.path.join(CACHE_DIR, 'location_map_exact.pkl') # New name for exact match
 UNIQUE_WATER_COORDS_CACHE = os.path.join(CACHE_DIR, 'unique_water_coords.pkl')
 WATER_DATA_CACHE = os.path.join(CACHE_DIR, 'monthly_water_data.pkl')
+NUM_PLOTS_TO_GENERATE = 10 # Number of plots to generate
+PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots'
 
 
 # --- Helper Functions ---
@@ -267,7 +268,7 @@ def calculate_correlation(aligned_df):
     #Check if the wildfire series is constant
     if aligned_df['cumuarea'].nunique() == 1:
         print("Wildfire series is constant. No correlation possible.")
-        return None, None
+        return 0, 1
     
     if aligned_df['cumuarea'].isnull().all() or aligned_df['waterstorage'].isnull().all():
         print("One or both series contain only NaNs.")
@@ -365,7 +366,7 @@ def prepare_aligned_timeseries_optimized(grid_gdf, monthly_water_series, target_
         return None
 
 
-# Keep analyze_location_correlation_optimized (needs slight change to handle None mapping)
+#* Keep analyze_location_correlation_optimized (needs slight change to handle None mapping)
 def analyze_location_correlation_optimized(
     target_lon, target_lat, grid_gdf, location_map, all_monthly_water_data, precision=6, calculate_plots=False
 ):
@@ -389,11 +390,11 @@ def analyze_location_correlation_optimized(
 
     water_coords_key = location_map.get(fire_coords_key)
 
-    # *** MODIFICATION START ***
+  
     if water_coords_key is None: # Check if mapping returned None (no match found)
         results['status'] = 'Error: Fire location not found in water data'
         return results
-    # *** MODIFICATION END ***
+  
 
     results['water_coords_key'] = water_coords_key
     results['closest_water_lon'] = water_coords_key[0]
@@ -423,6 +424,125 @@ def analyze_location_correlation_optimized(
     # Optional plots removed for brevity/memory
 
     return results
+
+#* ---- Plotting Function ----
+def plot_first_x_timeseries(
+    results_list,
+    num_plots,
+    output_dir,
+    # Required data sources for regenerating aligned_df:
+    wildfire_grid_gdf,
+    all_monthly_water_data,
+    location_map,
+    precision=6,
+    fire_col='cumuarea',
+    water_col='waterstorage',
+    fire_label='Cumulative Area', # Default label
+    water_label='Water Storage' # Default label
+):
+    """
+    Generates and saves time series plots for the first 'num_plots'
+    successfully analyzed locations found in the results_list.
+
+    Args:
+        results_list (list): List of dictionaries from analyze_location_correlation_optimized.
+        num_plots (int): The maximum number of plots to generate.
+        output_dir (str): Directory path to save the plot PNG files.
+        wildfire_grid_gdf (GeoDataFrame): Original aggregated fire data.
+        all_monthly_water_data (dict): Dictionary of preprocessed water time series.
+        location_map (dict): The mapping from fire coords to water coords.
+        precision (int): Coordinate precision used in analysis.
+        fire_col (str): Column name for fire data in aligned_df.
+        water_col (str): Column name for water data in aligned_df.
+        fire_label (str): Label for fire data axis/legend.
+        water_label (str): Label for water data axis/legend.
+    """
+    print(f"\nGenerating up to {num_plots} time series plots...")
+    if not os.path.exists(output_dir):
+        try:
+            os.makedirs(output_dir)
+            print(f"Created plot output directory: {output_dir}")
+        except OSError as e:
+            print(f"Error creating plot directory {output_dir}: {e}")
+            return # Cannot proceed without output directory
+
+    plots_generated = 0
+    for result in results_list:
+        if plots_generated >= num_plots:
+            break # Stop once desired number of plots is reached
+
+        if result.get('status') == 'OK':
+            target_lon = result['target_lon']
+            target_lat = result['target_lat']
+            water_coords_key = result['water_coords_key']
+            correlation = result.get('correlation', np.nan) # Get correlation if available
+
+            print(f"  Plotting for: ({target_lon:.{precision}f}, {target_lat:.{precision}f})...")
+
+            # Need to regenerate the aligned_df for plotting
+            monthly_water_series = all_monthly_water_data.get(water_coords_key)
+            if monthly_water_series is None:
+                print(f"  Warning: Could not find water series for key {water_coords_key} needed for plotting. Skipping.")
+                continue
+
+            aligned_df = prepare_aligned_timeseries_optimized(
+                wildfire_grid_gdf, monthly_water_series, target_lon, target_lat, precision=precision
+            )
+
+            if aligned_df is None or aligned_df.empty:
+                print(f"  Warning: Could not regenerate valid aligned data for plotting location ({target_lon:.{precision}f}, {target_lat:.{precision}f}). Skipping.")
+                continue
+
+            # --- Generate Plot ---
+            try:
+                fig, ax1 = plt.subplots(figsize=(12, 6))
+
+                # Plot Fire Data (e.g., Cumulative Area)
+                color1 = 'tab:red'
+                ax1.set_xlabel('Time')
+                ax1.set_ylabel(fire_label, color=color1)
+                ax1.plot(aligned_df.index, aligned_df[fire_col], color=color1, marker='o', linestyle='-', markersize=4, label=fire_label)
+                ax1.tick_params(axis='y', labelcolor=color1)
+                ax1.grid(True, axis='y', linestyle=':', alpha=0.7)
+
+                # Create a second y-axis for the Water Storage data
+                ax2 = ax1.twinx()
+                color2 = 'tab:blue'
+                ax2.set_ylabel(water_label, color=color2)
+                ax2.plot(aligned_df.index, aligned_df[water_col], color=color2, marker='x', linestyle='--', markersize=4, label=water_label)
+                ax2.tick_params(axis='y', labelcolor=color2)
+
+                # Formatting
+                plt.title(f'Fire ({fire_label}) vs. {water_label}\n'
+                          f'Location: Lon={target_lon:.{precision}f}, Lat={target_lat:.{precision}f}\n'
+                          f'Correlation: {correlation:.3f} (n={len(aligned_df)})')
+                fig.autofmt_xdate() # Rotate date labels for better readability
+                ax1.xaxis.set_major_locator(mdates.YearLocator()) # Major ticks yearly
+                ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m')) # Format ticks
+                ax1.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 7])) # Minor ticks semi-annually
+                plt.minorticks_on() # Show minor ticks
+
+                # Combine legends
+                lines1, labels1 = ax1.get_legend_handles_labels()
+                lines2, labels2 = ax2.get_legend_handles_labels()
+                ax2.legend(lines1 + lines2, labels1 + labels2, loc='best')
+
+                fig.tight_layout() # Adjust layout to prevent overlap
+
+                # Save the plot
+                plot_filename = f"timeseries_{target_lon:.{precision}f}_{target_lat:.{precision}f}.png"
+                plot_filepath = os.path.join(output_dir, plot_filename)
+                plt.savefig(plot_filepath)
+                plt.close(fig) # Close the figure to free memory
+                # print(f"    Plot saved to: {plot_filepath}")
+                plots_generated += 1
+
+            except Exception as e:
+                print(f"  Error generating plot for ({target_lon:.{precision}f}, {target_lat:.{precision}f}): {e}")
+                plt.close('all') # Close any potentially open figures in case of error
+
+    print(f"Finished generating plots. {plots_generated} plots saved to {output_dir}.")
+
 
 
 # =======================================================================
@@ -582,6 +702,26 @@ if __name__ == "__main__":
         )
         all_results.append(result)
         # if fire_locations_processed % 500 == 0: gc.collect()
+
+    
+    # --- Step 5.5: Generate Plots (BEFORE deleting data) ---
+    # Check if there are results and data needed for plotting still exists
+    if all_results and wildfire_grid_gdf is not None and all_monthly_water_data is not None and location_map is not None:
+            plot_first_x_timeseries(
+                results_list=all_results,
+                num_plots=NUM_PLOTS_TO_GENERATE, # Use constant defined at top
+                output_dir=PLOT_OUTPUT_DIR,     # Use constant defined at top
+                wildfire_grid_gdf=wildfire_grid_gdf,
+                all_monthly_water_data=all_monthly_water_data,
+                location_map=location_map,
+                precision=COORD_PRECISION,
+                fire_label='Cumulative Area [ha]', # Add units if known
+                water_label='Water Storage [m3/m3]' # Add units if known
+            )
+    else:
+            print("\nSkipping plot generation because input data is missing or no results were generated.")
+
+
 
 
     # Clean up large data objects after analysis
