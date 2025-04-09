@@ -18,8 +18,8 @@ CACHE_DIR = 'cache'
 LOCATION_MAP_CACHE = os.path.join(CACHE_DIR, 'location_map_exact.pkl') # New name for exact match
 UNIQUE_WATER_COORDS_CACHE = os.path.join(CACHE_DIR, 'unique_water_coords.pkl')
 WATER_DATA_CACHE = os.path.join(CACHE_DIR, 'monthly_water_data.pkl')
-NUM_PLOTS_TO_GENERATE = 10 # Number of plots to generate
-PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots'
+NUM_PLOTS_TO_GENERATE = 100 # Number of plots to generate
+PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg' # Directory for plots
 
 
 # --- Helper Functions ---
