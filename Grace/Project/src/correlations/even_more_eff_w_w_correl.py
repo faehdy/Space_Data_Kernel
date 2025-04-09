@@ -19,7 +19,7 @@ LOCATION_MAP_CACHE = os.path.join(CACHE_DIR, 'location_map_exact.pkl') # New nam
 UNIQUE_WATER_COORDS_CACHE = os.path.join(CACHE_DIR, 'unique_water_coords.pkl')
 WATER_DATA_CACHE = os.path.join(CACHE_DIR, 'monthly_water_data.pkl')
 NUM_PLOTS_TO_GENERATE = 100 # Number of plots to generate
-PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg' # Directory for plots
+PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg_masc' # Directory for plots
 
 
 # --- Helper Functions ---
@@ -552,7 +552,7 @@ if __name__ == "__main__":
 
     # --- Configuration ---
     wildfire_file = 'Grace/Project/Data/aggregated_wildfire_grid_complete_1deg_w0.gpkg'
-    water_file = 'Grace/Project/output/downsampled_5deg_water_aligned.parquet'
+    water_file = 'Grace/Project/output/downsampled_mascons_5deg_water_aligned.parquet'
     results_output_file = 'Grace/Project/output/correlation_results_exact_match.csv'
 
     if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
