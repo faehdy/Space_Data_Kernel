@@ -552,7 +552,7 @@ if __name__ == "__main__":
 
     # --- Configuration ---
     wildfire_file = 'Grace/Project/Data/aggregated_wildfire_grid_complete_1deg_w0.gpkg'
-    water_file = 'Grace/Project/output/downsampled_1deg_water.parquet'
+    water_file = 'Grace/Project/output/downsampled_5deg_water_aligned.parquet'
     results_output_file = 'Grace/Project/output/correlation_results_exact_match.csv'
 
     if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
