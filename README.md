@@ -8,14 +8,15 @@ Wildfire preprocessing: Makes a grid of 1deg for every month which includes the 
 
 water_combiner: Combines the meascons and the soil moisture in a certain way and rescales the grid which resulted from that to 1°
 
-LWE_Mascon.ipynb: Interpolates the grace data for gaps using slines of grade 2 for every single mode of the PCA
+
+LWE_Preprocessing: Interpolates the grace data for gaps using linear for only the modes 2, 3, 5. Therefore extracting the glacial-iceshield-anomalies. 
 
 
 
 Workflow:
 1. Download all the relevant GLDAS Files from the NASA Website
 
-1.5 Run LWE_Mascon.ipynb for the interpolation of the mascons
+1.5 Run LWE_Preprocessing.ipynb for the interpolation of the mascons, and to filter out the 1 mode of the PCA. 
 
 2. Run Explore GLDAS to combine all the individual Months to one big file with all the cells and all the Months
 
