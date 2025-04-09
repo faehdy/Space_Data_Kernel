@@ -391,7 +391,7 @@ TIME_END = '2022-12-31'
 SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] 
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
-MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons_Canada_Interpolated.nc'
+MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons_Canada_Interpolated_spline_modes2-5.nc'
 
 
 
