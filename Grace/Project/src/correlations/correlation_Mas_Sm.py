@@ -387,11 +387,11 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 # Define Inputs
 LOCATION = (-80, 55.0)  
 TIME_START = '2002-01-01'
-TIME_END = '2017-12-31'
+TIME_END = '2022-12-31'
 SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] 
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
-MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons.nc'
+MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons_Canada_Interpolated.nc'
 
 
 
