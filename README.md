@@ -11,6 +11,8 @@ water_combiner: Combines the meascons and the soil moisture in a certain way and
 
 LWE_Preprocessing: Interpolates the grace data for gaps using linear for only the modes 2, 3, 5. Therefore extracting the glacial-iceshield-anomalies. 
 
+LWE_grid reduction: Reduces the LWE Mascons to a grid with the desired size (in our case 5°x5°)
+
 
 
 Workflow:
@@ -18,15 +20,17 @@ Workflow:
 
 1.5 Run LWE_Preprocessing.ipynb for the interpolation of the mascons, and to filter out the 1 mode of the PCA. 
 
+1.6 Run the LWE_grid_reduction to get the gridded data
+
 2. Run Explore GLDAS to combine all the individual Months to one big file with all the cells and all the Months
 
 3. Run the correlation_Mas_SM Script to get the correlation values between the Soilmoisture data and the Mascons
 
-4. Run the water combiner which combines the Mascons and the SM data to one file and downsamples it to 1° Resolution
+4. Run the water combiner which combines the Mascons and the SM data to one file and downsamples it to 5° Resolution
 
 5. Run Plot_the_wildfires to get an overview over the wildfire data
 
-6. Run the wildfire_Preprocessing.ipynb to get a grid of 1° for each Month which includes the cumulative burned area
+6. Run the wildfire_Preprocessing.ipynb to get a grid of 5° for each Month which includes the cumulative burned area
 
 7. Run even_more_eff_w_w_correlator.py !!!!!!CHANGE_NAME!!!!!! to get the correlation and cross correlation for the wildfire area and the water
 
