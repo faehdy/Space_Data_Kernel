@@ -19,7 +19,7 @@ LOCATION_MAP_CACHE = os.path.join(CACHE_DIR, 'location_map_exact.pkl') # New nam
 UNIQUE_WATER_COORDS_CACHE = os.path.join(CACHE_DIR, 'unique_water_coords.pkl')
 WATER_DATA_CACHE = os.path.join(CACHE_DIR, 'monthly_water_data.pkl')
 NUM_PLOTS_TO_GENERATE = 100 # Number of plots to generate
-PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg_masc' # Directory for plots
+PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg_GSM' # Directory for plots
 
 
 # --- Helper Functions ---
@@ -438,7 +438,7 @@ def plot_first_x_timeseries(
     fire_col='cumuarea',
     water_col='waterstorage',
     fire_label='Cumulative Area', # Default label
-    water_label='Water Storage' # Default label
+    water_label='Water Storage (GRACE + GLDAS)' # Default label
 ):
     """
     Generates and saves time series plots for the first 'num_plots'
@@ -515,7 +515,7 @@ def plot_first_x_timeseries(
                 # Formatting
                 plt.title(f'Fire ({fire_label}) vs. {water_label}\n'
                           f'Location: Lon={target_lon:.{precision}f}, Lat={target_lat:.{precision}f}\n'
-                          f'Correlation: {correlation:.3f} (n={len(aligned_df)})')
+                          f'Correlation: {correlation:.3f}')
                 fig.autofmt_xdate() # Rotate date labels for better readability
                 ax1.xaxis.set_major_locator(mdates.YearLocator()) # Major ticks yearly
                 ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m')) # Format ticks
@@ -552,8 +552,8 @@ if __name__ == "__main__":
 
     # --- Configuration ---
     wildfire_file = 'Grace/Project/Data/aggregated_wildfire_grid_complete_1deg_w0.gpkg'
-    water_file = 'Grace/Project/output/downsampled_mascons_5deg_water_aligned.parquet'
-    results_output_file = 'Grace/Project/output/correlation_results_exact_match.csv'
+    water_file = 'Grace/Project/output/merged_standardized_data_0.5_0.5.parquet'
+    results_output_file = 'Grace/Project/output/correlation_results_w_w_5_GSM.csv'
 
     if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
 
@@ -716,7 +716,7 @@ if __name__ == "__main__":
                 location_map=location_map,
                 precision=COORD_PRECISION,
                 fire_label='Cumulative Area [ha]', # Add units if known
-                water_label='Water Storage [m3/m3]' # Add units if known
+                water_label='Water Storage (GRACE + GLDAS)' # Add units if known
             )
     else:
             print("\nSkipping plot generation because input data is missing or no results were generated.")
