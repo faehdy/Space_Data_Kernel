@@ -21,7 +21,7 @@ correlator water wildfire: Correlates the preprocessed (combination of Grace and
 Workflow:
 1. Clone this repository
 
-2. Set up a venv and install the packages which are listed in requirements.txt
+2. Set up a venv and install the packages which are listed in requirements.txt (https://polybox.ethz.ch/index.php/f/4028862749)
 
 3. Run LWE_Preprocessing.ipynb for the interpolation of the missing mascons months, and to filter out the 1 mode of the PCA. 
 
