@@ -25,21 +25,22 @@ Workflow:
 
 2.1 Set up a venv and install the packages which are listed in requirements.txt 
 
-2.2 Download all the data which are needed using the init.ipynb from the polybox shared by simon stähler (https://polybox.ethz.ch/index.php/f/4028862749)
+2.2 Download all the data which are needed using the init.ipynb from the polybox shared by simon stähler (Backup Link: https://polybox.ethz.ch/index.php/f/4028862749)
+If the data folder already exists delete it and rerun the code.
 
-3. Run LWE_Preprocessing.ipynb for the interpolation of the missing mascons months, and to filter out the 1 mode of the PCA. 
+3. Run preprocessing/LWE_Preprocessing.ipynb for the interpolation of the missing mascons months, and to filter out the 1 mode of the PCA. 
 
-4. Run the LWE_grid_reduction to get the gridded data on the 5x5° grid
+4. Run the preprocessing/LWE_grid_reduction.ipynb to get the gridded data on the 5x5° grid
 
-5. Run Explore GLDAS to combine all the individual Months to one big file with all the cells and all the Months
+5. Run preprocessing/Explore_GLDAS.ipynb to combine all the individual Months to one big file with all the cells and all the Months
 
-6. Run the correlation_Mas_SM Script to get the correlation values between the Soilmoisture data and the Mascons
+6. Run the correlations/correlation_Mas_SM.py Script to get the correlation values between the Soilmoisture data and the Mascons, the plots and the summary csv.
 
-7. Run the water combiner which combines the Mascons and the SM data to one file and downsamples it to 5° Resolution
+7. Run the preprocessing/water_combiner.ipynb which combines the Mascons and the SM data to one file and downsamples it to 5° Resolution
 
-8. Run Plot_the_wildfires to get an overview over the wildfire data
+8. Run Plot_the_fires.ipynb to get an overview over the wildfire data
 
-9. Run the Wildfire_preprocessing.ipynb to get a grid of 5° for each Month which includes the cumulative burned area
+9. Run the preprocessing/Wildfire_preprocessing.ipynb to get a grid of 5° for each Month which includes the cumulative burned area
 
 10. Run water_wildfire_correl.py to get the correlation and cross correlation for the wildfire area and the water. !! Attention: For processing speed reasons the script stores the matches to the Cache folder which is created. If different data is analysed make sure to delete the cache before rerunning the script!!
 
