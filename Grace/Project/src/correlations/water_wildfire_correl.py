@@ -19,7 +19,7 @@ LOCATION_MAP_CACHE = os.path.join(CACHE_DIR, 'location_map_exact.pkl') # New nam
 UNIQUE_WATER_COORDS_CACHE = os.path.join(CACHE_DIR, 'unique_water_coords.pkl')
 WATER_DATA_CACHE = os.path.join(CACHE_DIR, 'monthly_water_data.pkl')
 NUM_PLOTS_TO_GENERATE = 100 # Number of plots to generate
-PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg_GLDAS' # Directory for plots
+PLOT_OUTPUT_DIR = 'Grace/Project/output/corr_w_w_plots_5deg_GSM' # Directory for plots
 
 
 # --- Helper Functions ---
@@ -552,8 +552,8 @@ if __name__ == "__main__":
 
     # --- Configuration ---
     wildfire_file = 'Grace/Project/Data/aggregated_wildfire_grid_complete_1deg_w0.gpkg'
-    water_file = 'Grace/Project/output/downsampled_GLDAS_5deg_water_aligned.parquet'
-    results_output_file = 'Grace/Project/output/correlation_results_w_w_5_GLDAS.csv'
+    water_file = 'Grace/Project/output/merged_standardized_data_0.5_0.5.parquet'
+    results_output_file = 'Grace/Project/output/correlation_results_w_w_5_GSM.csv'
 
     if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
 
@@ -718,7 +718,7 @@ if __name__ == "__main__":
                 location_map=location_map,
                 precision=COORD_PRECISION,
                 fire_label='Cumulative Area [ha]', # Add units if known
-                water_label='Soil Moisture GLDAS [kg m-2]' # Add units if known
+                water_label='Waterstorage (GRACE + GLDAS)' # Add units if known
             )
     else:
             print("\nSkipping plot generation because input data is missing or no results were generated.")
