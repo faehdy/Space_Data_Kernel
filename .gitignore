@@ -1,6 +1,8 @@
-Grace/Project/Data
+Grace/Project/Data/*
 .venv
 *.gif
-Grace/Project/output
+Grace/Project/output/*
 *.csv
 *.pkl
+*.png
+*.

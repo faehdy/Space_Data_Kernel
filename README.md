@@ -1,3 +1,5 @@
+All the relevant Scripts for the Project in CC2 can be found under Grace/Project/src
+
 init.ipynb: Downloads the Data from Simon Stählers shared polybox folder
 
 requirements.txt: Lists all the packages needed.
