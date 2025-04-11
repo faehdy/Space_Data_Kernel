@@ -66,7 +66,7 @@ def get_unique_locations_gdf(gdf, precision=6):
     unique_indices = unique_coords.index
     # Use .iloc with unique indices derived from drop_duplicates - safer if original index has duplicates
     # Find integer positions of unique indices
-    # Note: This assumes unique_indices are labels present in gdf.index
+    # Note: This assumes unique_indices are lables present in gdf.index
     # If index is not unique, .loc might return multiple rows.
     # Alternative: gdf.iloc[gdf.index.get_indexer(unique_indices)] if index is standard
     unique_gdf = gdf.loc[unique_indices].copy()
