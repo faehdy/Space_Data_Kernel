@@ -3,7 +3,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
+import os
+from pathlib import Path
 from scipy.spatial.distance import cdist # For finding nearest points efficiently
+
+# generate the folder output/corr_Mas_SM if it does not exist
+output_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'corr_Mas_SM')
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+    print(f"Output directory created: {output_dir}")
+else:
+    print(f"Output directory already exists: {output_dir}")
 
 # --- Helper Function (for Mascon time) ---
 def Convert_2002_2_DMJ(days, unit='days since 2002-04-01 00:00:00.0'):
@@ -366,7 +376,14 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 
     # --- 6. Save Final Output with all the Input params---
     # Save parameters and correlation to a CSV file
-    output_csv_path = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_results_Grace_SM.csv'
+    # Get the current script directory
+    script_dir = Path(__file__).parent.absolute()
+
+    # Navigate up to the project root directory (3 levels up from correlations folder)
+    project_dir = script_dir.parent.parent
+
+    # Define output path relative to project directory
+    output_csv_path = os.path.join(project_dir, 'output', 'correlation_results_Grace_SM.csv')
     try:
         # Create a dictionary of parameters and results
         result_data = {
@@ -405,8 +422,13 @@ TIME_START = '2002-01-01'
 TIME_END = '2024-12-31'
 SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] 
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
-GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
-MASCONS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/JPL_Mascons_Canada_Interpolated_spline_modes2-5.nc'
+# Get the current script directory and project root
+script_dir = Path(__file__).parent.absolute()
+project_dir = script_dir.parent.parent
+
+# Define data paths relative to project root
+GLDAS_FILE = os.path.join(project_dir, 'Data', 'data_GLDAS', 'compiled_canada_soil_moisture.csv')
+MASCONS_FILE = os.path.join(project_dir, 'Data', 'JPL_Mascons_Canada_Interpolated_spline_modes2-5.nc')
 
 
 
@@ -430,7 +452,7 @@ for loc in locations:
 
     if plot_figure:
         # Save the plot to a file
-        plot_filename = f"/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/output/correlation_plots/mascon_gldas_correlation_{loc[0]}_{loc[1]}.png"
+        plot_filename = os.path.join(project_dir, 'output', 'corr_Mas_SM',f'mascon_gldas_correlation_{loc[0]}_{loc[1]}.png')
         plot_figure.savefig(plot_filename)
         print(f"Plot saved as: {plot_filename}")
 
