@@ -190,7 +190,22 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
             return np.nan, None
 
         # Sum the selected soil moisture columns (kg/m^2 is equivalent to mm)
-        gldas_series = gldas_location_df[selected_cols].mean(axis=1)
+        # Weighted mean calculation
+        # Weights based on layer thickness: 0-10cm (10/200), 10-40cm (30/200), 40-100cm (60/200), 100-200cm (100/200)
+        weights = {
+            'SoilMoi0_10cm_inst': 10/200,
+            'SoilMoi10_40cm_inst': 30/200, 
+            'SoilMoi40_100cm_inst': 60/200,
+            'SoilMoi100_200cm_inst': 100/200
+        }
+        
+        # Get weights for the selected columns
+        selected_weights = [weights[col] for col in selected_cols]
+        # Calculate weighted mean
+        gldas_series = pd.Series(
+            np.average(gldas_location_df[selected_cols], axis=1, weights=selected_weights),
+            index=gldas_location_df.index
+        )
         gldas_series.name = f"GLDAS_SoilMoisture_{'_'.join(soil_depths)}_mm"
 
 
@@ -321,8 +336,8 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 
         color = 'tab:blue'
         ax1.set_xlabel('Time')
-        ax1.set_ylabel(mascon_series.name, color=color)
-        ax1.plot(df_aligned.index, df_aligned[mascon_series.name], color=color, marker='o', linestyle='-', markersize=4, label=mascon_series.name)
+        ax1.set_ylabel('Liquid Water Equivalent [cm]', color=color)
+        ax1.plot(df_aligned.index, df_aligned[mascon_series.name], color=color, marker='o', linestyle='-', markersize=4, label='Mascon LWE')
         ax1.tick_params(axis='y', labelcolor=color)
         ax1.grid(True, axis='y', linestyle=':', alpha=0.5)
 
@@ -330,8 +345,8 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
         # Create a second y-axis for the GLDAS data
         ax2 = ax1.twinx()
         color = 'tab:red'
-        ax2.set_ylabel(gldas_series.name, color=color)
-        ax2.plot(df_aligned.index, df_aligned[gldas_series.name], color=color, marker='x', linestyle='--', markersize=4, label=gldas_series.name)
+        ax2.set_ylabel('Soil moisture [mm]', color=color)
+        ax2.plot(df_aligned.index, df_aligned[gldas_series.name], color=color, marker='x', linestyle='--', markersize=4, label='GLDAS Soil Moisture 0-200cm')
         ax2.tick_params(axis='y', labelcolor=color)
 
         # Improve formatting
@@ -387,7 +402,7 @@ def correlate_mascons_gldas(location, time_start, time_end, soil_depths, gldas_f
 # Define Inputs
 LOCATION = (-80, 55.0)  
 TIME_START = '2002-01-01'
-TIME_END = '2022-12-31'
+TIME_END = '2024-12-31'
 SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] 
 #SOIL_DEPTHS = ['0-10cm', '10-40cm', '40-100cm', '100-200cm'] # Use all layers
 GLDAS_FILE = '/home/faehdy/repos/Grace/Space_Data_Kernel/Grace/Project/Data/data_GLDAS/compiled_canada_soil_moisture.csv' 
